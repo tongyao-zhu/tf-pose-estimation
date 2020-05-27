@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 from tf_pose.estimator import TfPoseEstimator
 from tf_pose.networks import get_graph_path, model_wh
+import tensorflow as tf
 
 logger = logging.getLogger('TfPoseEstimatorRun')
 logger.handlers.clear()
@@ -29,8 +30,12 @@ if __name__ == '__main__':
                              'default=0x0, Recommends : 432x368 or 656x368 or 1312x736 ')
     parser.add_argument('--resize-out-ratio', type=float, default=4.0,
                         help='if provided, resize heatmaps before they are post-processed. default=1.0')
-
+    parser.add_argument('--save-dir', type=str, default=None, help="if provided, save image to a location")
     args = parser.parse_args()
+
+    config = tf.ConfigProto(
+        device_count={'GPU': 0}
+    )
 
     w, h = model_wh(args.resize)
     if w == 0 or h == 0:
@@ -60,7 +65,8 @@ if __name__ == '__main__':
         a = fig.add_subplot(2, 2, 1)
         a.set_title('Result')
         plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-
+        if args.save_dir is not None:
+            cv2.imwrite(args.save_dir, image)
         bgimg = cv2.cvtColor(image.astype(np.uint8), cv2.COLOR_BGR2RGB)
         bgimg = cv2.resize(bgimg, (e.heatMat.shape[1], e.heatMat.shape[0]), interpolation=cv2.INTER_AREA)
 
